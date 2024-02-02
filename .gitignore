@@ -27,3 +27,4 @@ go.sum
 settings.dev.*.yml
 settings.dev.yml
 *.log
+*.tar.gz
