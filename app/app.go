@@ -17,19 +17,17 @@ import (
 )
 
 type App struct {
-	db         *gorm.DB
-	client     *evmutils.EthClient
-	txCache    []appModel.Transaction
-	txCachSize int
+	db      *gorm.DB
+	client  *evmutils.EthClient
+	txCache []appModel.Transaction
 }
 
 func NewApp() *App {
 
 	return &App{
-		db:         runtime.RuntimeConfig.GetDbByKey("*"),
-		client:     evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
-		txCache:    []appModel.Transaction{},
-		txCachSize: config.ChainConfig.TxCacheSize,
+		db:      runtime.RuntimeConfig.GetDbByKey("*"),
+		client:  evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
+		txCache: []appModel.Transaction{},
 	}
 }
 
@@ -138,7 +136,7 @@ func (a *App) saveTransactions(txsCh chan chan []appModel.Transaction, blockNumS
 		}
 		//批量插入
 		a.txCache = append(a.txCache, txs...)
-		if len(a.txCache) >= a.txCachSize || blockNumEnd-blockNumStart < uint64(a.txCachSize) {
+		if len(a.txCache) >= config.ChainConfig.TxCacheSize || blockNumEnd-blockNumStart < uint64(config.ChainConfig.TxCacheSize) {
 			for {
 				err := a.db.Create(a.txCache).Error
 				if err != nil {
