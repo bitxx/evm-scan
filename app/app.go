@@ -92,7 +92,7 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 				break
 			}
 			var ts []appModel.Transaction
-			for _, tx := range transactions {
+			for txIdx, tx := range transactions {
 				protected := constant.TxProtectdFalse
 				if tx.Protected {
 					protected = constant.TxProtectdTrue
@@ -110,6 +110,7 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 					Protected:   protected,
 					CreatedAt:   &createTime,
 				}
+				log.Infof("scanning ... block number: %d, tx number: %d", i, txIdx+1)
 				ts = append(ts, t)
 			}
 			c <- ts
@@ -131,19 +132,17 @@ func (a *App) saveTransactions(txsCh chan chan []appModel.Transaction, blockNumS
 	for {
 		c := <-txsCh
 		txs := <-c
-		for idx, tx := range txs {
-			log.Infof("scanning ... block number: %d, tx number: %d", tx.BlockNumber, idx+1)
-		}
 		//批量插入
 		a.txCache = append(a.txCache, txs...)
 		if len(a.txCache) >= config.ChainConfig.TxCacheSize || blockNumEnd-blockNumStart < uint64(config.ChainConfig.TxCacheSize) {
 			for {
 				err := a.db.Create(a.txCache).Error
 				if err != nil {
-					log.Errorf("batch insert error,begin block: %d, end block: %d, begin tx: %s, end tx: %s, error info", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber, a.txCache[0].Hash, a.txCache[len(a.txCache)-1].Hash, err)
+					log.Errorf("batch insert error, begin block: %d, end block: %d, error info: %s", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber, err)
 					time.Sleep(constant.TimeSleep)
 					continue
 				}
+				log.Infof("batch insert success, begin block: %d, end block: %d", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber)
 				break
 			}
 			a.txCache = []appModel.Transaction{}
