@@ -7,8 +7,8 @@ require (
 	github.com/bitxx/load-config v1.6.0
 	github.com/bitxx/logger v1.6.2
 	github.com/shopspring/decimal v1.3.1
-	gorm.io/driver/mysql v1.5.2
-	gorm.io/gorm v1.25.6
+	gorm.io/driver/mysql v1.5.4
+	gorm.io/gorm v1.25.7
 	gorm.io/plugin/dbresolver v1.5.0
 )
 
@@ -38,7 +38,6 @@ require (
 	github.com/imdario/mergo v0.3.13 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/miguelmota/go-ethereum-hdwallet v0.1.2 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
@@ -56,7 +55,6 @@ require (
 	golang.org/x/sync v0.5.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/tools v0.15.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
