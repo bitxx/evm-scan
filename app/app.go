@@ -58,7 +58,7 @@ func (a *App) ScanAllTransactions() {
 
 		//不断追最新块
 		if uint64(blockNumStart) < blockNumEnd {
-			log.Info(fmt.Sprintf("--- scaning block from: %d to %d", blockNumStart, blockNumEnd))
+			log.Info(fmt.Sprintf("new scanning, block from %d to %d", blockNumStart, blockNumEnd))
 			a.ScanTransactionsByNumber(uint64(blockNumStart), blockNumEnd)
 			blockNumStart = int64(blockNumEnd + 1)
 		}
@@ -99,7 +99,7 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 				break
 			}
 			var ts []appModel.Transaction
-			for txIdx, tx := range transactions {
+			for _, tx := range transactions {
 				protected := constant.TxProtectdFalse
 				if tx.Protected {
 					protected = constant.TxProtectdTrue
@@ -117,9 +117,9 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 					Protected:   protected,
 					CreatedAt:   &createTime,
 				}
-				log.Infof("scanning ... block number: %d, tx number: %d", i, txIdx+1)
 				ts = append(ts, t)
 			}
+			log.Infof("scanning ... block number: %d, tx count: %d", i, len(transactions))
 			c <- ts
 			wg.Done()
 		}(i)
