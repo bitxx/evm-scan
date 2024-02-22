@@ -141,7 +141,7 @@ func (a *App) saveTransactions(txsCh chan chan []appModel.Transaction, blockNumS
 		txs := <-c
 		//批量插入
 		a.txCache = append(a.txCache, txs...)
-		if len(a.txCache) >= config.ChainConfig.TxCacheSize || blockNumEnd-blockNumStart < uint64(config.ChainConfig.TxCacheSize) {
+		if len(a.txCache) >= config.ChainConfig.TxCacheSize || uint64(len(a.txCache)) >= (blockNumEnd-blockNumStart)+1 {
 			for {
 				err := a.db.Create(a.txCache).Error
 				if err != nil {
