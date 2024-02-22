@@ -32,17 +32,21 @@ func NewApp() *App {
 }
 
 func (a *App) ScanAllTransactions() {
+	blockNumStart := int64(0)
 	for {
 		//获取块开始
-		tx := appModel.Transaction{}
-		err := a.db.Last(&tx).Error
-		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error(fmt.Sprintf("get latest local block error: %s", err.Error()))
-			continue
-		}
-		blockNumStart := int64(1)
-		if err == nil {
-			blockNumStart = tx.BlockNumber + 1
+		if blockNumStart <= 0 {
+			blockNumStart = int64(1)
+			tx := appModel.Transaction{}
+			err := a.db.Last(&tx).Error
+			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+				log.Error(fmt.Sprintf("get latest local block error: %s", err.Error()))
+				continue
+			}
+			// 此时如果err不为空，则说明ErrRecordNotFound，也就是 blockNumStart = 1
+			if err == nil {
+				blockNumStart = tx.BlockNumber + 1
+			}
 		}
 
 		//获取块结束
@@ -56,7 +60,9 @@ func (a *App) ScanAllTransactions() {
 		if uint64(blockNumStart) < blockNumEnd {
 			log.Info(fmt.Sprintf("--- scaning block from: %d to %d", blockNumStart, blockNumEnd))
 			a.ScanTransactionsByNumber(uint64(blockNumStart), blockNumEnd)
+			blockNumStart = int64(blockNumEnd + 1)
 		}
+		time.Sleep(constant.TimeSleep)
 	}
 
 }
