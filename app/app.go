@@ -54,6 +54,7 @@ func (a *App) ScanAllTransactions() {
 
 		//不断追最新块
 		if uint64(blockNumStart) < blockNumEnd {
+			log.Info(fmt.Sprintf("--- scaning block from: %d to %d", blockNumStart, blockNumEnd))
 			a.ScanTransactionsByNumber(uint64(blockNumStart), blockNumEnd)
 		}
 	}
