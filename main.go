@@ -40,6 +40,8 @@ func main() {
 		time.Sleep(constant.TimeSleep) //3秒种后，窗口关闭
 	}()
 
+	//以下功能根据需要取消注释即可运行
+
 	//通用-扫描块
 	/*go func() {
 		app.NewApp().ScanAllTransactions()
