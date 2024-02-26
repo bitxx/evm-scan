@@ -34,6 +34,9 @@ func NewApp() *App {
 func (a *App) ScanAllTransactions() {
 	blockNumStart := int64(0)
 	for {
+		//需要延迟，以防某些异常导致无限请求
+		time.Sleep(constant.TimeSleep)
+
 		//获取块开始
 		if blockNumStart <= 0 {
 			blockNumStart = int64(1)
@@ -62,7 +65,6 @@ func (a *App) ScanAllTransactions() {
 			a.ScanTransactionsByNumber(uint64(blockNumStart), blockNumEnd)
 			blockNumStart = int64(blockNumEnd + 1)
 		}
-		time.Sleep(constant.TimeSleep)
 	}
 
 }
