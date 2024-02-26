@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"evm-scan/app/zkf"
+	"evm-scan/app"
 	"evm-scan/core/config"
 	"evm-scan/core/storage/database"
 	"evm-scan/core/utils/log"
@@ -43,14 +43,14 @@ func main() {
 	//以下功能根据需要取消注释即可运行
 
 	//通用-扫描块
-	/*go func() {
+	go func() {
 		app.NewApp().ScanAllTransactions()
-	}()*/
+	}()
 
 	//针对zkf-统计
-	go func() {
+	/*go func() {
 		zkf.NewZKF().StatGas()
-	}()
+	}()*/
 
 	<-ctx.Done()
 }
