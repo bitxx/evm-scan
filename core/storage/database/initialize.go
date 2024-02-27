@@ -20,7 +20,6 @@ func Setup() {
 }
 
 func setupSimpleDatabase(host string, c *config.Database) {
-	log.Infof("%s => %s", host, c.Source)
 	registers := make([]cfg.ResolverConfigure, len(c.Registers))
 	for i := range c.Registers {
 		registers[i] = cfg.NewResolverConfigure(

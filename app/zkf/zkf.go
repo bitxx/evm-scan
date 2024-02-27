@@ -11,21 +11,24 @@ import (
 	appModel "evm-scan/model"
 	"evm-scan/model/constant"
 	"github.com/bitxx/evm-utils"
+	"github.com/bitxx/evm-utils/util/dateutil"
 	"github.com/shopspring/decimal"
 	"gorm.io/gorm"
 	"time"
 )
 
 type ZKF struct {
-	db     *gorm.DB
-	client *evmutils.EthClient
+	db        *gorm.DB
+	client    *evmutils.EthClient
+	cacheScan map[string]int64
 }
 
 func NewZKF() *ZKF {
 
 	return &ZKF{
-		db:     runtime.RuntimeConfig.GetDbByKey("*"),
-		client: evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
+		db:        runtime.RuntimeConfig.GetDbByKey("*"),
+		client:    evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
+		cacheScan: map[string]int64{},
 	}
 }
 
@@ -49,20 +52,15 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		log.Error("zkf => table name %s is error", tableName)
 		return
 	}
-	local, err := time.LoadLocation("Local")
+	dateStart, err := dateutil.ParseStrToTime("2024-01-14 08:00:00", "", -1)
 	if err != nil {
-		log.Error("zkf => get local date error: ", err)
-		return
-	}
-	dateStart, err := time.ParseInLocation("2006-01-02 15:04:05", "2024-01-14 08:00:00", local)
-	if err != nil {
-		log.Error("zkf => parse local date error: ", err)
+		log.Error("zkf => get default start date error: ", err)
 		return
 	}
 	dateEnd := dateStart
 	for {
 		//需要延迟，以防某些异常导致无限请求
-		time.Sleep(constant.TimeShortSleep)
+		time.Sleep(constant.TimeSleep)
 
 		//减少误差，当前时间在此处标记
 		now := time.Now()
@@ -73,6 +71,13 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			log.Error("zkf => [%s] get latest gas stat info error: %s", tableName, err.Error())
 			continue
 		}
+
+		//使用缓存，若数据一直没有变化，则不走后面的所有逻辑，减少数据库交互压力
+		if z.cacheScan[tableName] == zkfStat.Id {
+			continue
+		}
+		z.cacheScan[tableName] = zkfStat.Id
+
 		// 此时如果err不为空，则说明ErrRecordNotFound，日期从默认值开始算
 		//若为空，则表明有记录
 		if err == nil {
@@ -140,7 +145,7 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			}
 
 			if count <= 0 {
-				log.Warnf("zkf => [%s] tx data is empty", flag)
+				log.Warnf("zkf => [%s] %s data is empty", flag, tbName)
 				continue
 			}
 
@@ -158,6 +163,11 @@ func (z *ZKF) statGasByTableName(tableName string) {
 
 		result := zkfModel.ZkfStatGas{}
 		result.DateStart = &dateStart
+		result.DateEnd = &maxBlockNumberDate
+		//若结束，则用截止时间
+		if calcStatus == zkfConstant.CalcStatusStop {
+			result.DateEnd = &dateEnd
+		}
 		result.BlockStart = minBlockNumber
 		result.BlockEnd = maxBlockNumber
 		result.TotalGas = cost
@@ -166,20 +176,16 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		result.AvgGasFee = cost.Div(decimal.NewFromInt(count))
 		result.AvgGasPrice = gasPrice.Div(decimal.NewFromInt(count))
 
-		if calcStatus == zkfConstant.CalcStatusRunning && zkfStat.Id > 0 {
+		if zkfStat.CalcStatus == zkfConstant.CalcStatusRunning && zkfStat.Id > 0 {
 			result.Id = zkfStat.Id
-			//若未结束，则用最新块时间，否则用截止时间
-			result.DateEnd = &maxBlockNumberDate
 			result.UpdatedAt = &now
 			result.CreatedAt = zkfStat.CreatedAt
 		} else {
-			result.DateEnd = &dateEnd
 			result.CreatedAt = &now
 			result.UpdatedAt = &now
 			//z.db.Table(tableName).Create(&result)
 		}
 		z.db.Table(tableName).Save(&result)
-		log.Infof("calc over [%s] start block %d, end date %d", flag, minBlockNumber, maxBlockNumber)
+		log.Infof("zkf => calc over [%s] start block %d, end block %d", flag, minBlockNumber, maxBlockNumber)
 	}
-
 }

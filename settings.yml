@@ -1,6 +1,11 @@
 ## *** 下方各项配置，确保输入配置格式正确，配置信息首尾注意不要留有空格等，当前版本暂不支持trimspace ***
 application:
   name: evm-scan
+  # 使用下述功能，则需要先数据库导入对应表
+  # 要启用多个，使用英文逗号隔，如：txScan,zkf
+  # txScan: 扫描链上所有交易，该功能适用于所有标准evm链；
+  # zkfScan: 统计+扫描zkf相关数据，针对zkf项目
+  run: txScan,zkfScan
 chain:
   # evm链结点地址
   url: "https://rpc.zkfair.io"

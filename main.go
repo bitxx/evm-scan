@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"evm-scan/app"
+	"evm-scan/app/zkf"
 	"evm-scan/core/config"
 	"evm-scan/core/storage/database"
 	"evm-scan/core/utils/log"
@@ -13,8 +14,12 @@ import (
 	"time"
 )
 
+var (
+	configPath = "settings.yml"
+)
+
 func init() {
-	configPath := "settings.yml"
+
 	if len(os.Args) >= 2 {
 		configPath = os.Args[1]
 	}
@@ -40,18 +45,18 @@ func main() {
 		time.Sleep(constant.TimeSleep) //3秒种后，窗口关闭
 	}()
 
-	//以下功能根据需要取消注释即可运行
-	//使用前，请先导入相应功能的数据库表
-
-	//通用-扫描块
-	go func() {
-		app.NewApp().ScanAllTransactions()
-	}()
-
-	//针对zkf-统计
-	/*go func() {
-		zkf.NewZKF().StatGas()
-	}()*/
-
+	runs := strings.Split(config.ApplicationConfig.Run, ",")
+	for _, run := range runs {
+		switch strings.TrimSpace(run) {
+		case "txScan":
+			go func() {
+				app.NewApp().ScanAllTransactions()
+			}()
+		case "zkfScan":
+			go func() {
+				zkf.NewZKF().StatGas()
+			}()
+		}
+	}
 	<-ctx.Done()
 }

@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : my-test
+ Source Server         : my-server
  Source Server Type    : MySQL
  Source Server Version : 100703
- Source Host           : 120.48.157.250:8990
+ Source Host           : 127.0.0.1:3306
  Source Schema         : zkfair
 
  Target Server Type    : MySQL
  Target Server Version : 100703
  File Encoding         : 65001
 
- Date: 26/02/2024 18:31:25
+ Date: 27/02/2024 12:18:31
 */
 
 SET NAMES utf8mb4;
@@ -35,6 +35,6 @@ CREATE TABLE `app_zkf_stat_hours_gas` (
   `updated_at` datetime DEFAULT current_timestamp() COMMENT '更新时间',
   `created_at` datetime DEFAULT current_timestamp() COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每周Gas';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每周Gas';
 
 SET FOREIGN_KEY_CHECKS = 1;

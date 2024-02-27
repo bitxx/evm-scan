@@ -7,6 +7,7 @@
 
 ## 当前功能
 1. 支持evm链按块扫描交易，并录入mysql。线程池异步，针对网络情况，自己可调整配置参数，尽可能快的扫描交易。当前在`zkfair`网络测试通过  
+2. 支持zkf的周、天、小时的gas和交易统计
 
 ## 编译步骤
 1. 需要有golang环境，`1.21.5`及以上的版本  
@@ -32,7 +33,9 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o scan main.go
 ```
 
 ## 使用步骤
-1. 导入项目根目录的`app.sql`到mysql数据库，我用的`mariadb v10.7.3`  
+1. 导入数据库，我用的`mariadb v10.7.3`
+    * 若扫描链交易记录，则导入`sql`目录中的`app.sql`到mysql数据库，
+    * 若使用zkf的统计和扫描，则导入`sql/zkf`目录中的所有表到mysql数据库，
 2. 执行上一步骤编译好的程序或者从此处下载最新已编译好的版本[evm-scan-release](https://github.com/bitxx/evm-scan/releases)（说明：配置文件中已经对各个配置做了详细描述）：
 ```shell
 # 根据配置文件描述，完成参数配置

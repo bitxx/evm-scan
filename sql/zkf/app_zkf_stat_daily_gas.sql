@@ -1,27 +1,27 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : my-test
+ Source Server         : my-server
  Source Server Type    : MySQL
  Source Server Version : 100703
- Source Host           : 120.48.157.250:8990
+ Source Host           : 127.0.0.1:3306
  Source Schema         : zkfair
 
  Target Server Type    : MySQL
  Target Server Version : 100703
  File Encoding         : 65001
 
- Date: 26/02/2024 18:32:03
+ Date: 27/02/2024 12:18:21
 */
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ----------------------------
--- Table structure for app_zkf_stat_weekly_gas
+-- Table structure for app_zkf_stat_daily_gas
 -- ----------------------------
-DROP TABLE IF EXISTS `app_zkf_stat_weekly_gas`;
-CREATE TABLE `app_zkf_stat_weekly_gas` (
+DROP TABLE IF EXISTS `app_zkf_stat_daily_gas`;
+CREATE TABLE `app_zkf_stat_daily_gas` (
   `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '编号',
   `block_start` int(11) DEFAULT NULL COMMENT '启始高度',
   `block_end` int(11) DEFAULT NULL COMMENT '截止高度',
@@ -35,6 +35,6 @@ CREATE TABLE `app_zkf_stat_weekly_gas` (
   `updated_at` datetime DEFAULT current_timestamp() COMMENT '更新时间',
   `created_at` datetime DEFAULT current_timestamp() COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每周Gas';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每周Gas';
 
 SET FOREIGN_KEY_CHECKS = 1;
