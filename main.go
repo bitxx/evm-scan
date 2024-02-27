@@ -14,12 +14,8 @@ import (
 	"time"
 )
 
-var (
-	configPath = "settings.yml"
-)
-
 func init() {
-
+	configPath := "settings.yml"
 	if len(os.Args) >= 2 {
 		configPath = os.Args[1]
 	}

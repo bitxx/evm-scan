@@ -31,14 +31,14 @@ func NewApp() *App {
 }
 
 func (a *App) ScanAllTransactions() {
-	blockNumStart := int64(0)
+	blockNumStart := uint64(0)
 	for {
 		//需要延迟，以防某些异常导致无限请求
 		time.Sleep(constant.TimeSleep)
 
 		//获取块开始
 		if blockNumStart <= 0 {
-			blockNumStart = int64(1)
+			blockNumStart = uint64(1)
 			tx := appModel.Transaction{}
 			err := a.db.Last(&tx).Error
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -59,10 +59,10 @@ func (a *App) ScanAllTransactions() {
 		}
 
 		//不断追最新块
-		if uint64(blockNumStart) < blockNumEnd {
+		if blockNumStart < blockNumEnd {
 			log.Infof("txScan => new scanning, block from %d to %d", blockNumStart, blockNumEnd)
-			a.ScanTransactionsByNumber(uint64(blockNumStart), blockNumEnd)
-			blockNumStart = int64(blockNumEnd + 1)
+			a.ScanTransactionsByNumber(blockNumStart, blockNumEnd)
+			blockNumStart = blockNumEnd + 1
 		}
 	}
 
@@ -105,13 +105,14 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 				if tx.Protected {
 					protected = constant.TxProtectdTrue
 				}
-				createTime := dateutil.ParseTimestampToTime(int64(tx.Time))
+				createTime, _ := dateutil.ParseTimestampToTime(int64(tx.Time), "")
 				t := appModel.Transaction{
 					Hash:        tx.Hash,
-					BlockNumber: int64(i),
+					BlockNumber: i,
 					From:        tx.From,
 					To:          tx.To,
 					GasPrice:    tx.GasPrice,
+					Gas:         tx.Gas,
 					Cost:        tx.Cost,
 					Type:        tx.Type,
 					Value:       tx.Value,

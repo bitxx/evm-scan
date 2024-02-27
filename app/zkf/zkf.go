@@ -20,7 +20,7 @@ import (
 type ZKF struct {
 	db        *gorm.DB
 	client    *evmutils.EthClient
-	cacheScan map[string]int64
+	cacheScan map[string]uint64
 }
 
 func NewZKF() *ZKF {
@@ -28,7 +28,7 @@ func NewZKF() *ZKF {
 	return &ZKF{
 		db:        runtime.RuntimeConfig.GetDbByKey("*"),
 		client:    evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
-		cacheScan: map[string]int64{},
+		cacheScan: map[string]uint64{},
 	}
 }
 
@@ -52,7 +52,8 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		log.Error("zkf => table name %s is error", tableName)
 		return
 	}
-	dateStart, err := dateutil.ParseStrToTime("2024-01-14 08:00:00", "", -1)
+	//UTC启动时间
+	dateStart, err := dateutil.ParseStrToTime("2024-01-14 00:00:00", "", -1)
 	if err != nil {
 		log.Error("zkf => get default start date error: ", err)
 		return
@@ -73,7 +74,7 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		}
 
 		//使用缓存，若数据一直没有变化，则不走后面的所有逻辑，减少数据库交互压力
-		if z.cacheScan[tableName] == zkfStat.Id {
+		if zkfStat.Id > 0 && z.cacheScan[tableName] == zkfStat.Id {
 			continue
 		}
 		z.cacheScan[tableName] = zkfStat.Id
@@ -91,8 +92,8 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		// 读取一个阶段的统计结果
 		var cost decimal.Decimal
 		var gasPrice decimal.Decimal
-		var minBlockNumber int64
-		var maxBlockNumber int64
+		var minBlockNumber uint64
+		var maxBlockNumber uint64
 		var maxBlockNumberDate time.Time
 		var count int64
 
