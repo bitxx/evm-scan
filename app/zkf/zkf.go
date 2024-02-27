@@ -18,17 +18,15 @@ import (
 )
 
 type ZKF struct {
-	db        *gorm.DB
-	client    *evmutils.EthClient
-	cacheScan map[string]uint64
+	db     *gorm.DB
+	client *evmutils.EthClient
 }
 
 func NewZKF() *ZKF {
 
 	return &ZKF{
-		db:        runtime.RuntimeConfig.GetDbByKey("*"),
-		client:    evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
-		cacheScan: map[string]uint64{},
+		db:     runtime.RuntimeConfig.GetDbByKey("*"),
+		client: evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
 	}
 }
 
@@ -72,12 +70,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			log.Errorf("zkf => [%s] get latest gas stat info error: %s", tableName, err.Error())
 			continue
 		}
-
-		//使用缓存，若数据一直没有变化，则不走后面的所有逻辑，减少数据库交互压力
-		/*if zkfStat.Id > 0 && z.cacheScan[tableName] == zkfStat.Id {
-			continue
-		}
-		z.cacheScan[tableName] = zkfStat.Id*/
 
 		// 此时如果err不为空，则说明ErrRecordNotFound，日期从默认值开始算
 		//若为空，则表明有记录
