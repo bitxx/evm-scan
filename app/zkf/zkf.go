@@ -53,7 +53,7 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		return
 	}
 	//UTC启动时间
-	dateStart, err := dateutil.ParseStrToTime("2024-01-14 00:00:00", "", -1)
+	dateStart, err := dateutil.ParseStrToTime("2024-01-14 00:00:00", "UTC", -1)
 	if err != nil {
 		log.Error("zkf => get default start date error: ", err)
 		return
@@ -69,15 +69,15 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		zkfStat := zkfModel.ZkfStatGas{}
 		err := z.db.Table(tableName).Last(&zkfStat).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Error("zkf => [%s] get latest gas stat info error: %s", tableName, err.Error())
+			log.Errorf("zkf => [%s] get latest gas stat info error: %s", tableName, err.Error())
 			continue
 		}
 
 		//使用缓存，若数据一直没有变化，则不走后面的所有逻辑，减少数据库交互压力
-		if zkfStat.Id > 0 && z.cacheScan[tableName] == zkfStat.Id {
+		/*if zkfStat.Id > 0 && z.cacheScan[tableName] == zkfStat.Id {
 			continue
 		}
-		z.cacheScan[tableName] = zkfStat.Id
+		z.cacheScan[tableName] = zkfStat.Id*/
 
 		// 此时如果err不为空，则说明ErrRecordNotFound，日期从默认值开始算
 		//若为空，则表明有记录
@@ -90,8 +90,8 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		}
 
 		// 读取一个阶段的统计结果
-		var cost decimal.Decimal
-		var gasPrice decimal.Decimal
+		var totalGasFee decimal.Decimal
+		var totalGasPrice decimal.Decimal
 		var minBlockNumber uint64
 		var maxBlockNumber uint64
 		var maxBlockNumberDate time.Time
@@ -104,8 +104,8 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			dateEnd = dateStart.Add(3599 * time.Second)
 
 			//统计
-			row := z.db.Model(&appModel.Transaction{}).Select("IFNULL(sum(cost),0),IFNULL(sum(gas_price),0),IFNULL(min(block_number),0),IFNULL(max(block_number),0),IFNULL(max(created_at),now()),IFNULL(count(1),0)").Where("created_at>=? and created_at<=?", dateStart, dateEnd).Row()
-			err = row.Scan(&cost, &gasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
+			row := z.db.Model(&appModel.Transaction{}).Select("IFNULL(sum(gas_used * effective_gas_price),0),IFNULL(sum(effective_gas_price),0),IFNULL(min(block_number),0),IFNULL(max(block_number),0),IFNULL(max(created_at),now()),IFNULL(count(1),0)").Where("created_at>=? and created_at<=?", dateStart, dateEnd).Row()
+			err = row.Scan(&totalGasFee, &totalGasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
 			if err != nil {
 				log.Error("zkf => [%s] stat gas data err: %s", flag, err.Error())
 				continue
@@ -138,8 +138,8 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				dateEnd = dateStart.AddDate(0, 0, 7).Add(-1 * time.Second)
 			}
 			//统计
-			row := z.db.Table(tbName).Select("IFNULL(sum(total_gas),0),IFNULL(sum(avg_gas_price),0),IFNULL(min(block_start),0),IFNULL(max(block_end),0),IFNULL(max(date_end),now()),IFNULL(sum(total_tx_count),0)").Where("date_start>=? and date_end<=?", dateStart, dateEnd).Row()
-			err = row.Scan(&cost, &gasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
+			row := z.db.Table(tbName).Select("IFNULL(sum(total_gas_fee),0),IFNULL(sum(total_gas_price),0),IFNULL(min(block_start),0),IFNULL(max(block_end),0),IFNULL(max(date_end),now()),IFNULL(sum(total_tx_count),0)").Where("date_start>=? and date_end<=?", dateStart, dateEnd).Row()
+			err = row.Scan(&totalGasFee, &totalGasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
 			if err != nil {
 				log.Error("zkf => [%s] stat gas data err: %s", flag, err.Error())
 				continue
@@ -171,11 +171,10 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		}
 		result.BlockStart = minBlockNumber
 		result.BlockEnd = maxBlockNumber
-		result.TotalGas = cost
+		result.TotalGasFee = totalGasFee
+		result.TotalGasPrice = totalGasPrice
 		result.TotalTxCount = count
 		result.CalcStatus = calcStatus
-		result.AvgGasFee = cost.Div(decimal.NewFromInt(count))
-		result.AvgGasPrice = gasPrice.Div(decimal.NewFromInt(count))
 
 		if zkfStat.CalcStatus == zkfConstant.CalcStatusRunning && zkfStat.Id > 0 {
 			result.Id = zkfStat.Id
@@ -184,7 +183,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		} else {
 			result.CreatedAt = &now
 			result.UpdatedAt = &now
-			//z.db.Table(tableName).Create(&result)
 		}
 		z.db.Table(tableName).Save(&result)
 		log.Infof("zkf => calc over [%s] start block %d, end block %d", flag, minBlockNumber, maxBlockNumber)

@@ -36,8 +36,8 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o scan main.go
 
 ## 使用步骤
 1. 导入数据库，我用的`mariadb v10.7.3`
-    * 若扫描链交易记录，则导入`sql`目录中的`app.sql`到mysql数据库，
-    * 若使用zkf的统计和扫描，则导入`sql/zkf`目录中的所有表到mysql数据库，
+    * 若扫描链交易记录，则导入`sql`目录中的`app_transaction.sql`到mysql数据库，
+    * 若使用zkf的统计和扫描，则导入`sql`目录中的`zkf.sql`到mysql数据库，
 2. 执行上一步骤编译好的程序或者从此处下载最新已编译好的版本[evm-scan-release](https://github.com/bitxx/evm-scan/releases)（说明：配置文件中已经对各个配置做了详细描述）：
 ```shell
 # 根据配置文件描述，完成参数配置

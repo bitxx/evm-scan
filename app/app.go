@@ -38,7 +38,7 @@ func (a *App) ScanAllTransactions() {
 
 		//获取块开始
 		if blockNumStart <= 0 {
-			blockNumStart = uint64(1)
+			blockNumStart = config.ChainConfig.BlockNumberStart
 			tx := appModel.Transaction{}
 			err := a.db.Last(&tx).Error
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -91,7 +91,7 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 			var err error
 			var transactions []model.Transaction
 			for {
-				transactions, err = a.client.TransactionsByBlockNumber(i)
+				transactions, err = a.client.TxReceiptByBlockNumber(i)
 				if err != nil {
 					log.Errorf("txScan => block: %d,transactions error: %s", i, err.Error())
 					time.Sleep(constant.TimeSleep)
@@ -105,19 +105,20 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 				if tx.Protected {
 					protected = constant.TxProtectdTrue
 				}
-				createTime, _ := dateutil.ParseTimestampToTime(int64(tx.Time), "")
+				createTime, _ := dateutil.ParseTimestampToTime(int64(tx.Time), "UTC")
 				t := appModel.Transaction{
-					Hash:        tx.Hash,
-					BlockNumber: i,
-					From:        tx.From,
-					To:          tx.To,
-					GasPrice:    tx.GasPrice,
-					Gas:         tx.Gas,
-					Cost:        tx.Cost,
-					Type:        tx.Type,
-					Value:       tx.Value,
-					Protected:   protected,
-					CreatedAt:   &createTime,
+					BlockNumber:       i,
+					Hash:              tx.Hash,
+					From:              tx.From,
+					To:                tx.To,
+					EffectiveGasPrice: tx.EffectiveGasPrice,
+					GasUsed:           tx.GasUsed,
+					TransactionIndex:  tx.TransactionIndex,
+					ReceiptStatus:     tx.ReceiptStatus,
+					Type:              tx.Type,
+					Value:             tx.Value,
+					Protected:         protected,
+					CreatedAt:         &createTime,
 				}
 				ts = append(ts, t)
 			}
