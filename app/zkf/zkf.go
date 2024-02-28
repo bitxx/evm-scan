@@ -20,7 +20,7 @@ import (
 type ZKF struct {
 	db        *gorm.DB
 	client    *evmutils.EthClient
-	cacheScan map[string]uint64
+	cacheScan map[string]uint64 //用于减少数据写入频率
 }
 
 func NewZKF() *ZKF {
