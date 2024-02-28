@@ -115,10 +115,12 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 					GasUsed:           tx.GasUsed,
 					TransactionIndex:  tx.TransactionIndex,
 					ReceiptStatus:     tx.ReceiptStatus,
+					Nonce:             tx.Nonce,
 					Type:              tx.Type,
 					Value:             tx.Value,
-					Protected:         protected,
-					CreatedAt:         &createTime,
+
+					Protected: protected,
+					CreatedAt: &createTime,
 				}
 				ts = append(ts, t)
 			}

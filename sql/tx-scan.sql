@@ -3,15 +3,15 @@
 
  Source Server         : my-server
  Source Server Type    : MySQL
- Source Server Version : 100703 (10.7.3-MariaDB-log)
+ Source Server Version : 100703
  Source Host           : 127.0.0.1:3306
  Source Schema         : evm-scan
 
  Target Server Type    : MySQL
- Target Server Version : 100703 (10.7.3-MariaDB-log)
+ Target Server Version : 100703
  File Encoding         : 65001
 
- Date: 27/02/2024 22:14:12
+ Date: 28/02/2024 09:33:22
 */
 
 SET NAMES utf8mb4;
@@ -32,6 +32,7 @@ CREATE TABLE `app_transaction` (
   `type` char(1) DEFAULT '0' COMMENT '交易类型',
   `effective_gas_price` decimal(30,0) DEFAULT 0 COMMENT 'gas price',
   `gas_used` bigint(20) DEFAULT 0 COMMENT 'gas使用',
+  `nonce` bigint(20) DEFAULT 0 COMMENT 'nonce',
   `transaction_index` int(11) DEFAULT 0 COMMENT '交易索引',
   `receipt_status` int(11) DEFAULT 0 COMMENT '回执状态',
   `created_at` datetime DEFAULT current_timestamp() COMMENT '创建时间',

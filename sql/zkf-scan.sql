@@ -3,15 +3,15 @@
 
  Source Server         : my-server
  Source Server Type    : MySQL
- Source Server Version : 100703 (10.7.3-MariaDB-log)
+ Source Server Version : 100703
  Source Host           : 127.0.0.1:3306
  Source Schema         : evm-scan
 
  Target Server Type    : MySQL
- Target Server Version : 100703 (10.7.3-MariaDB-log)
+ Target Server Version : 100703
  File Encoding         : 65001
 
- Date: 27/02/2024 22:38:30
+ Date: 28/02/2024 09:30:30
 */
 
 SET NAMES utf8mb4;
@@ -34,7 +34,7 @@ CREATE TABLE `app_zkf_stat_daily_gas` (
   `updated_at` datetime DEFAULT current_timestamp() COMMENT '更新时间',
   `created_at` datetime DEFAULT current_timestamp() COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每周Gas';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每日Gas';
 
 -- ----------------------------
 -- Table structure for app_zkf_stat_hours_gas
@@ -53,7 +53,7 @@ CREATE TABLE `app_zkf_stat_hours_gas` (
   `updated_at` datetime DEFAULT current_timestamp() COMMENT '更新时间',
   `created_at` datetime DEFAULT current_timestamp() COMMENT '创建时间',
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每周Gas';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='zkf统计每小时Gas';
 
 -- ----------------------------
 -- Table structure for app_zkf_stat_weekly_gas

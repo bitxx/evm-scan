@@ -13,8 +13,8 @@ const (
 
 type ZkfStatGas struct {
 	Id            uint64          `json:"id" gorm:"primaryKey;autoIncrement;comment:主键编码"`
-	BlockStart    uint64          `json:"blockStart" gorm:"column:block_start;type:int(11);comment:块开始高度"`
-	BlockEnd      uint64          `json:"blockEnd" gorm:"column:block_end;type:int(11);comment:块截止高度"`
+	BlockStart    uint64          `json:"blockStart" gorm:"column:block_start;type:bigint(20);comment:块开始高度"`
+	BlockEnd      uint64          `json:"blockEnd" gorm:"column:block_end;type:bigint(20);comment:块截止高度"`
 	DateStart     *time.Time      `json:"dateStart" gorm:"column:date_start;type:datetime;comment:开始时间"`
 	DateEnd       *time.Time      `json:"dateEnd" gorm:"column:date_end;type:datetime;comment:截止时间"`
 	TotalTxCount  int64           `json:"totalTxCount" gorm:"column:total_tx_count;type:int(11);comment:交易总笔数"`
