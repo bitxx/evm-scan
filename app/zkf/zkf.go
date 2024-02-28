@@ -49,13 +49,13 @@ func (z *ZKF) StatGas() {
 //	@receiver z
 func (z *ZKF) statGasByTableName(tableName string) {
 	if tableName != zkfModel.HourTable && tableName != zkfModel.DailyTable && tableName != zkfModel.WeeklyTable {
-		log.Error("zkf => table name %s is error", tableName)
+		log.Errorf("[zkf] => table name %s is error", tableName)
 		return
 	}
 	//UTC启动时间
 	dateStart, err := dateutil.ParseStrToTime("2024-01-14 00:00:00", "UTC", -1)
 	if err != nil {
-		log.Error("zkf => get default start date error: ", err)
+		log.Errorf("[zkf] => get default start date error: %s", err.Error())
 		return
 	}
 	dateEnd := dateStart
@@ -69,7 +69,7 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		zkfStat := zkfModel.ZkfStatGas{}
 		err := z.db.Table(tableName).Last(&zkfStat).Error
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Errorf("zkf => [%s] get latest gas stat info error: %s", tableName, err.Error())
+			log.Errorf("[zkf] => [%s] get latest gas stat info error: %s", tableName, err.Error())
 			continue
 		}
 
@@ -101,11 +101,11 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			row := z.db.Model(&appModel.Transaction{}).Select("IFNULL(sum(gas_used * effective_gas_price),0),IFNULL(sum(effective_gas_price),0),IFNULL(min(block_number),0),IFNULL(max(block_number),0),IFNULL(max(created_at),now()),IFNULL(count(1),0)").Where("created_at>=? and created_at<=?", dateStart, dateEnd).Row()
 			err = row.Scan(&totalGasFee, &totalGasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
 			if err != nil {
-				log.Error("zkf => [%s] stat gas data err: %s", flag, err.Error())
+				log.Error("[zkf] => [%s] stat gas data err: %s", flag, err.Error())
 				continue
 			}
 			if count <= 0 {
-				log.Warnf("zkf => [%s] tx data is empty", flag)
+				log.Warnf("[zkf] => [%s] tx data is empty", flag)
 				continue
 			}
 
@@ -113,7 +113,7 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			tx := appModel.Transaction{}
 			err = z.db.Last(&tx).Error
 			if err != nil {
-				log.Error("zkf => [%s] get latest tx err: %s", flag, err.Error())
+				log.Error("[zkf] => [%s] get latest tx err: %s", flag, err.Error())
 				continue
 			}
 			if tx.CreatedAt.Compare(dateEnd) > 0 {
@@ -135,12 +135,12 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			row := z.db.Table(tbName).Select("IFNULL(sum(total_gas_fee),0),IFNULL(sum(total_gas_price),0),IFNULL(min(block_start),0),IFNULL(max(block_end),0),IFNULL(max(date_end),now()),IFNULL(sum(total_tx_count),0)").Where("date_start>=? and date_end<=?", dateStart, dateEnd).Row()
 			err = row.Scan(&totalGasFee, &totalGasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
 			if err != nil {
-				log.Error("zkf => [%s] stat gas data err: %s", flag, err.Error())
+				log.Error("[zkf] => [%s] stat gas data err: %s", flag, err.Error())
 				continue
 			}
 
 			if count <= 0 {
-				log.Warnf("zkf => [%s] %s data is empty", flag, tbName)
+				log.Warnf("[zkf] => [%s] %s data is empty", flag, tbName)
 				continue
 			}
 
@@ -148,7 +148,7 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			zkfStatGas := zkfModel.ZkfStatGas{}
 			err = z.db.Table(tbName).Last(&zkfStatGas).Error
 			if err != nil {
-				log.Errorf("zkf => [%s] get latest tx err: %s", flag, err.Error())
+				log.Errorf("[zkf] => [%s] get latest tx err: %s", flag, err.Error())
 				continue
 			}
 			if zkfStatGas.DateEnd.Compare(dateEnd) > 0 {
@@ -186,6 +186,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		}
 		z.db.Table(tableName).Save(&result)
 
-		log.Infof("zkf => calc over [%s] start block %d, end block %d", flag, minBlockNumber, maxBlockNumber)
+		log.Infof("[zkf] => [%s] calc over. start block %d, end block %d", flag, minBlockNumber, maxBlockNumber)
 	}
 }

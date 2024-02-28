@@ -42,7 +42,7 @@ func (a *App) ScanAllTransactions() {
 			tx := appModel.Transaction{}
 			err := a.db.Last(&tx).Error
 			if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-				log.Errorf("txScan => get latest local block error: %s", err.Error())
+				log.Errorf("[txScan] => get latest local block error: %s", err.Error())
 				continue
 			}
 			// 此时如果err不为空，则说明ErrRecordNotFound，也就是 blockNumStart = 1
@@ -54,13 +54,13 @@ func (a *App) ScanAllTransactions() {
 		//获取块结束
 		blockNumEnd, err := a.client.LatestBlockNumber()
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-			log.Errorf("txScan => get latest chain block error: %s", err.Error())
+			log.Errorf("[txScan] => get latest chain block error: %s", err.Error())
 			continue
 		}
 
 		//不断追最新块
 		if blockNumStart < blockNumEnd {
-			log.Infof("txScan => new scanning, block from %d to %d", blockNumStart, blockNumEnd)
+			log.Infof("[txScan] => new scanning, block from %d to %d", blockNumStart, blockNumEnd)
 			a.ScanTransactionsByNumber(blockNumStart, blockNumEnd)
 			blockNumStart = blockNumEnd + 1
 		}
@@ -93,7 +93,7 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 			for {
 				transactions, err = a.client.TxReceiptByBlockNumber(i)
 				if err != nil {
-					log.Errorf("txScan => block: %d,transactions error: %s", i, err.Error())
+					log.Errorf("[txScan] => block: %d,transactions error: %s", i, err.Error())
 					time.Sleep(constant.TimeSleep)
 					continue
 				}
@@ -146,7 +146,7 @@ func (a *App) saveTransactions(txsCh chan chan []appModel.Transaction, blockNumS
 
 		//展示扫描情况
 		for _, tx := range txs {
-			log.Infof("txScan => scanning ... block number: %d, tx count: %d", tx.BlockNumber, len(txs))
+			log.Infof("[txScan] => scanning ... block number: %d, tx count: %d", tx.BlockNumber, len(txs))
 			break
 		}
 
@@ -156,11 +156,11 @@ func (a *App) saveTransactions(txsCh chan chan []appModel.Transaction, blockNumS
 			for {
 				err := a.db.Create(a.txCache).Error
 				if err != nil {
-					log.Errorf("txScan => batch insert error, begin block: %d, end block: %d, error info: %s", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber, err)
+					log.Errorf("[txScan] => batch insert error, begin block: %d, end block: %d, error info: %s", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber, err)
 					time.Sleep(constant.TimeSleep)
 					continue
 				}
-				log.Infof("txScan => batch insert success, begin block: %d, end block: %d", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber)
+				log.Infof("[txScan] => batch insert success, begin block: %d, end block: %d", a.txCache[0].BlockNumber, a.txCache[len(a.txCache)-1].BlockNumber)
 				break
 			}
 			a.txCache = []appModel.Transaction{}
