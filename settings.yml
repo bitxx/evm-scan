@@ -23,7 +23,7 @@ database:
   # 目前仅支持mysql
   driver: mysql
   # 数据库连接字符串 mysql 缺省信息 charset=utf8&parseTime=True&loc=Local&timeout=1000ms
-  source: root:xxx@tcp(127.0.0.1:8990)/evm-scan?charset=utf8&parseTime=True&loc=Local&timeout=1000ms
+  source: root:xxx@tcp(127.0.0.1:3306)/evm-scan?charset=utf8&parseTime=True&loc=Local&timeout=1000ms
   # 最大连接时间，按官方建议，不建议超过500秒，参考：https://github.com/go-sql-driver/mysql
   connMaxLifetime: 180
   # 最大连接数
