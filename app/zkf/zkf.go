@@ -151,10 +151,10 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			}
 
 			//若没有新增数据，则继续下一轮
-			if z.cacheScan[tableName] == count {
+			if z.cacheScan[tbName] == count {
 				continue
 			}
-			z.cacheScan[tableName] = count
+			z.cacheScan[tbName] = count
 
 			//判断这个阶段的数据是否结束
 			zkfStatGas := zkfModel.ZkfStatGas{}
