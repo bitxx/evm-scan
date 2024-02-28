@@ -124,7 +124,6 @@ func (a *App) ScanTransactionsByNumber(blockNumStart, blockNumEnd uint64) {
 				}
 				ts = append(ts, t)
 			}
-			log.Infof("txScan => scanning ... block number: %d, tx count: %d", i, len(transactions))
 			c <- ts
 			wg.Done()
 		}(i)
@@ -144,6 +143,13 @@ func (a *App) saveTransactions(txsCh chan chan []appModel.Transaction, blockNumS
 	for {
 		c := <-txsCh
 		txs := <-c
+
+		//展示扫描情况
+		for _, tx := range txs {
+			log.Infof("txScan => scanning ... block number: %d, tx count: %d", tx.BlockNumber, len(txs))
+			break
+		}
+
 		//批量插入
 		a.txCache = append(a.txCache, txs...)
 		if len(a.txCache) >= config.ChainConfig.TxCacheSize || uint64(len(a.txCache)) >= (blockNumEnd-blockNumStart)+1 {

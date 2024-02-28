@@ -20,7 +20,7 @@ import (
 type ZKF struct {
 	db        *gorm.DB
 	client    *evmutils.EthClient
-	cacheScan map[string]int64
+	cacheScan map[string]uint64
 }
 
 func NewZKF() *ZKF {
@@ -28,7 +28,7 @@ func NewZKF() *ZKF {
 	return &ZKF{
 		db:        runtime.RuntimeConfig.GetDbByKey("*"),
 		client:    evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
-		cacheScan: map[string]int64{},
+		cacheScan: map[string]uint64{},
 	}
 }
 
@@ -110,10 +110,10 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			}
 
 			//若没有新增数据，则继续下一轮
-			if z.cacheScan[tableName] == count {
+			if z.cacheScan[tableName] == maxBlockNumber {
 				continue
 			}
-			z.cacheScan[tableName] = count
+			z.cacheScan[tableName] = maxBlockNumber
 
 			//判断这个阶段的数据是否结束
 			tx := appModel.Transaction{}
@@ -151,10 +151,10 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			}
 
 			//若没有新增数据，则继续下一轮
-			if z.cacheScan[tbName] == count {
+			if z.cacheScan[tableName] == maxBlockNumber {
 				continue
 			}
-			z.cacheScan[tbName] = count
+			z.cacheScan[tableName] = maxBlockNumber
 
 			//判断这个阶段的数据是否结束
 			zkfStatGas := zkfModel.ZkfStatGas{}
