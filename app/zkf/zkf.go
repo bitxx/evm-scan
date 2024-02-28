@@ -18,23 +18,17 @@ import (
 )
 
 type ZKF struct {
-	db     *gorm.DB
-	client *evmutils.EthClient
-
-	// 用于标记小时、日、周数据执行情况，用以减少db操作
-	/*hourIsUpdate   bool
-	dailyIsUpdate  bool
-	weeklyIsUpdate bool*/
+	db        *gorm.DB
+	client    *evmutils.EthClient
+	cacheScan map[string]int64
 }
 
 func NewZKF() *ZKF {
 
 	return &ZKF{
-		db:     runtime.RuntimeConfig.GetDbByKey("*"),
-		client: evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
-		/*hourIsUpdate:   false,
-		dailyIsUpdate:  false,
-		weeklyIsUpdate: false,*/
+		db:        runtime.RuntimeConfig.GetDbByKey("*"),
+		client:    evmutils.NewEthClient(config.ChainConfig.Url, config.ChainConfig.Timeout),
+		cacheScan: map[string]int64{},
 	}
 }
 
@@ -68,25 +62,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 	for {
 		//需要延迟，以防某些异常导致无限请求
 		time.Sleep(constant.TimeSleep)
-
-		//通过判断数据变化，减少db操作
-		/*if tableName == zkfModel.HourTable {
-			z.hourIsUpdate = false
-		}
-		if tableName == zkfModel.DailyTable {
-			//小时数据未更新，则日数据不处理
-			if z.hourIsUpdate == false {
-				continue
-			}
-			z.dailyIsUpdate = false
-		}
-		if tableName == zkfModel.WeeklyTable {
-			//日数据未更新，则周数据不处理
-			if z.dailyIsUpdate == false {
-				continue
-			}
-			z.weeklyIsUpdate = false
-		}*/
 
 		//减少误差，当前时间在此处标记
 		now := time.Now()
@@ -134,6 +109,12 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				continue
 			}
 
+			//若没有新增数据，则继续下一轮
+			if z.cacheScan[tableName] == count {
+				continue
+			}
+			z.cacheScan[tableName] = count
+
 			//判断这个阶段的数据是否结束
 			tx := appModel.Transaction{}
 			err = z.db.Last(&tx).Error
@@ -168,6 +149,12 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				log.Warnf("zkf => [%s] %s data is empty", flag, tbName)
 				continue
 			}
+
+			//若没有新增数据，则继续下一轮
+			if z.cacheScan[tableName] == count {
+				continue
+			}
+			z.cacheScan[tableName] = count
 
 			//判断这个阶段的数据是否结束
 			zkfStatGas := zkfModel.ZkfStatGas{}
@@ -204,17 +191,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			result.UpdatedAt = &now
 		}
 		z.db.Table(tableName).Save(&result)
-
-		//数据变化标记
-		/*if tableName == zkfModel.HourTable {
-			z.hourIsUpdate = true
-		}
-		if tableName == zkfModel.DailyTable {
-			z.dailyIsUpdate = true
-		}
-		if tableName == zkfModel.WeeklyTable {
-			z.weeklyIsUpdate = true
-		}*/
 
 		log.Infof("zkf => calc over [%s] start block %d, end block %d", flag, minBlockNumber, maxBlockNumber)
 	}
