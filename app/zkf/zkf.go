@@ -109,12 +109,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				continue
 			}
 
-			//若没有新增数据，则继续下一轮
-			if z.cacheScan[tableName] == maxBlockNumber {
-				continue
-			}
-			z.cacheScan[tableName] = maxBlockNumber
-
 			//判断这个阶段的数据是否结束
 			tx := appModel.Transaction{}
 			err = z.db.Last(&tx).Error
@@ -150,12 +144,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				continue
 			}
 
-			//若没有新增数据，则继续下一轮
-			if z.cacheScan[tableName] == maxBlockNumber {
-				continue
-			}
-			z.cacheScan[tableName] = maxBlockNumber
-
 			//判断这个阶段的数据是否结束
 			zkfStatGas := zkfModel.ZkfStatGas{}
 			err = z.db.Table(tbName).Last(&zkfStatGas).Error
@@ -167,6 +155,12 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				calcStatus = zkfConstant.CalcStatusStop
 			}
 		}
+
+		//若没有新增数据，则继续下一轮,减少数据写入频率
+		if z.cacheScan[tableName] == maxBlockNumber && calcStatus == zkfConstant.CalcStatusRunning {
+			continue
+		}
+		z.cacheScan[tableName] = maxBlockNumber
 
 		result := zkfModel.ZkfStatGas{}
 		result.DateStart = &dateStart
