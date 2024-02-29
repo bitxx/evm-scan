@@ -95,10 +95,21 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		flag := "hour"
 		if tableName == zkfModel.HourTable {
 			flag = "hour"
-			dateEnd = dateStart.Add(3599 * time.Second)
+			dateEnd = dateStart.Add(3600 * time.Second)
+
+			//判断这个阶段的数据是否结束，一定要先判断，以防时间差导致结果异常
+			tx := appModel.Transaction{}
+			err = z.db.Last(&tx).Error
+			if err != nil {
+				log.Error("[zkf] => [%s] get latest tx err: %s", flag, err.Error())
+				continue
+			}
+			if tx.CreatedAt.Compare(dateEnd) >= 0 {
+				calcStatus = zkfConstant.CalcStatusStop
+			}
 
 			//统计
-			row := z.db.Model(&appModel.Transaction{}).Select("IFNULL(sum(gas_used * effective_gas_price),0),IFNULL(sum(effective_gas_price),0),IFNULL(min(block_number),0),IFNULL(max(block_number),0),IFNULL(max(created_at),now()),IFNULL(count(1),0)").Where("created_at>=? and created_at<=?", dateStart, dateEnd).Row()
+			row := z.db.Model(&appModel.Transaction{}).Select("IFNULL(sum(gas_used * effective_gas_price),0),IFNULL(sum(effective_gas_price),0),IFNULL(min(block_number),0),IFNULL(max(block_number),0),IFNULL(max(created_at),now()),IFNULL(count(1),0)").Where("created_at>=? and created_at<?", dateStart, dateEnd).Row()
 			err = row.Scan(&totalGasFee, &totalGasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
 			if err != nil {
 				log.Error("[zkf] => [%s] stat gas data err: %s", flag, err.Error())
@@ -108,31 +119,32 @@ func (z *ZKF) statGasByTableName(tableName string) {
 				log.Warnf("[zkf] => [%s] tx data is empty", flag)
 				continue
 			}
-
-			//判断这个阶段的数据是否结束
-			tx := appModel.Transaction{}
-			err = z.db.Last(&tx).Error
-			if err != nil {
-				log.Error("[zkf] => [%s] get latest tx err: %s", flag, err.Error())
-				continue
-			}
-			if tx.CreatedAt.Compare(dateEnd) > 0 {
-				calcStatus = zkfConstant.CalcStatusStop
-			}
 		} else {
 			tbName := zkfModel.HourTable
 			if tableName == zkfModel.DailyTable {
 				flag = "daily"
 				tbName = zkfModel.HourTable
-				dateEnd = dateStart.AddDate(0, 0, 1).Add(-1 * time.Second)
+				dateEnd = dateStart.AddDate(0, 0, 1)
 			}
 			if tableName == zkfModel.WeeklyTable {
 				flag = "weekly"
 				tbName = zkfModel.DailyTable
-				dateEnd = dateStart.AddDate(0, 0, 7).Add(-1 * time.Second)
+				dateEnd = dateStart.AddDate(0, 0, 7)
 			}
+
+			//判断这个阶段的数据是否结束，一定要先判断，以防时间差导致结果异常
+			zkfStatGas := zkfModel.ZkfStatGas{}
+			err = z.db.Table(tbName).Last(&zkfStatGas).Error
+			if err != nil {
+				log.Errorf("[zkf] => [%s] get latest tx err: %s", flag, err.Error())
+				continue
+			}
+			if zkfStatGas.DateEnd.Compare(dateEnd) >= 0 {
+				calcStatus = zkfConstant.CalcStatusStop
+			}
+
 			//统计
-			row := z.db.Table(tbName).Select("IFNULL(sum(total_gas_fee),0),IFNULL(sum(total_gas_price),0),IFNULL(min(block_start),0),IFNULL(max(block_end),0),IFNULL(max(date_end),now()),IFNULL(sum(total_tx_count),0)").Where("date_start>=? and date_end<=?", dateStart, dateEnd).Row()
+			row := z.db.Table(tbName).Select("IFNULL(sum(total_gas_fee),0),IFNULL(sum(total_gas_price),0),IFNULL(min(block_start),0),IFNULL(max(block_end),0),IFNULL(max(date_end),now()),IFNULL(sum(total_tx_count),0)").Where("date_start>=? and date_end<?", dateStart, dateEnd).Row()
 			err = row.Scan(&totalGasFee, &totalGasPrice, &minBlockNumber, &maxBlockNumber, &maxBlockNumberDate, &count)
 			if err != nil {
 				log.Error("[zkf] => [%s] stat gas data err: %s", flag, err.Error())
@@ -142,17 +154,6 @@ func (z *ZKF) statGasByTableName(tableName string) {
 			if count <= 0 {
 				log.Warnf("[zkf] => [%s] %s data is empty", flag, tbName)
 				continue
-			}
-
-			//判断这个阶段的数据是否结束
-			zkfStatGas := zkfModel.ZkfStatGas{}
-			err = z.db.Table(tbName).Last(&zkfStatGas).Error
-			if err != nil {
-				log.Errorf("[zkf] => [%s] get latest tx err: %s", flag, err.Error())
-				continue
-			}
-			if zkfStatGas.DateEnd.Compare(dateEnd) > 0 {
-				calcStatus = zkfConstant.CalcStatusStop
 			}
 		}
 
@@ -167,7 +168,8 @@ func (z *ZKF) statGasByTableName(tableName string) {
 		result.DateEnd = &maxBlockNumberDate
 		//若结束，则用截止时间
 		if calcStatus == zkfConstant.CalcStatusStop {
-			result.DateEnd = &dateEnd
+			end := dateEnd.Add(-1 * time.Second)
+			result.DateEnd = &end
 		}
 		result.BlockStart = minBlockNumber
 		result.BlockEnd = maxBlockNumber
