@@ -43,6 +43,10 @@ func (z *ZKF) StatGas() {
 	<-ctx.Done()
 }
 
+func (z *ZKF) StackInfo() {
+
+}
+
 // statGasByTableName
 //
 //	@Description: 根据表统计gas情况
